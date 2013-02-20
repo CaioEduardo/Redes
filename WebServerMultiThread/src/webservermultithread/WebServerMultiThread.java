@@ -19,6 +19,8 @@ public final class WebServerMultiThread
         int porta;
         //porta = 1025+(int)(7975*Math.random());
         
+        //Por questões de comodidade, a porta será fixa com
+        //valorr 1100.
         porta=1100;
         
         //Imprime a porta

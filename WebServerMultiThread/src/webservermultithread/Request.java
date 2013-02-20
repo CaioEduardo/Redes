@@ -56,7 +56,8 @@ public final class Request implements Runnable{
         token.nextToken(); 
         String object = token.nextToken();
         
-        // Acrescente um “.” de modo que a requisição do arquivo esteja dentro do diretório atual.
+        // Acrescenta-se um “.” para que a requisição do arquivo
+        // seja feita dentro do diretório do projeto.
         object = "." + object;
         
         if(object.equals("./"))
@@ -64,7 +65,9 @@ public final class Request implements Runnable{
         
         System.out.println("\n"+object);
         
-        // Abrir o arquivo requisitado.
+        // Para abrir o arquivo criamos um FileInputStream
+        // e para posteriores checkagem de se o arquivo
+        // foi encontrado ou não e assim montar a resposta
         FileInputStream objectInput = null;
         Boolean objectExists = true;
         
@@ -74,61 +77,49 @@ public final class Request implements Runnable{
             objectExists = false;
             System.out.println("\nDoesn't Exist\n");
         }
-        
-        // Construir a mensagem de resposta.
-        String statusLine = null;
-        String contentTypeLine = null;
-        String entityBody = null;
+          
+        // De acordo com a variável previamente criada, checka-se se
+        // o arquivo requisitado existe, e então cria-se a mensagem
+        // de resposta, e envia-la, assim como o corpo da mensagem.
+        String anwserMessage = null;
         if (objectExists) {
-                statusLine = "HTTP/1.0 200 OK\r\n";
-                contentTypeLine = "Content-type: " + 
-                contentType(object) + "\r\n";
+                anwserMessage = "HTTP/1.0 200 OK\r\nContent-type: " 
+                            +contentType(object) + "\r\n";
+                output.writeBytes(anwserMessage+"\r\n");
+                sendBytes(objectInput, output);
+                objectInput.close();
         } else {
-                statusLine = "HTTP/1.0 404 Not Found\r\n";
-                contentTypeLine = "Content-Type: text/html\r\n";
-                entityBody = "<HTML><Head><Title>Not Found</Title></Head>"
-                             + "<body><b>Not Found</b></body></HTML>";
+                anwserMessage = "HTTP/1.0 404 Not Found\r\nContent-Type: text/html\r\n" +
+                            "<HTML><Head><Title>Not Found</Title></Head>"
+                            + "<body><b>Not Found</b></body></HTML>";
+                output.writeBytes(anwserMessage+"\r\n");
 	}
         
-        // Enviar a linha de status.
-        output.writeBytes(statusLine);
-        // Enviar a linha de tipo de conteúdo.
-        output.writeBytes(contentTypeLine);
-        // Enviar uma linha em branco para indicar o fim das linhas de cabeçalho.
-        output.writeBytes("\r\n");
-
-    // Enviar o corpo da entidade.
-    if (objectExists) {
-            sendBytes(objectInput, output);
-            objectInput.close();
-    } else {
-            output.writeBytes(entityBody);
-    }
+    input.close();
     output.close();
     reader.close();
     socketConection.close();
 }
     
     
-    private static void sendBytes(FileInputStream fis, OutputStream os) throws Exception
+    private static void sendBytes(FileInputStream objectInput, OutputStream objectOutput) throws Exception
     {
-        // Construir um buffer de 1K para comportar os bytes no caminho para o socket.
+        // Construir um buffer e copia o arquivo para ser enviado pela saida
+        // so socket
         byte[] buffer = new byte[1024];
         int bytes = 0;
-        // Copiar o arquivo requisitado dentro da cadeia de saída do socket.
-        while((bytes = fis.read(buffer)) != -1 ) {
-            os.write(buffer, 0, bytes);
+        while((bytes = objectInput.read(buffer)) != -1 ) {
+            objectOutput.write(buffer, 0, bytes);
         }
     }
 
-    private static String contentType(String fileName)
+    private static String contentType(String object)
     {
-        System.out.println("\nTrying Content Type\n\n\n");
-        if(fileName.endsWith(".htm") || fileName.endsWith(".html")) {
+        if(object.endsWith(".htm") || object.endsWith(".html")) {
             return "text/html";
-        }else if(fileName.endsWith(".jpeg") || fileName.endsWith(".jpg")){
+        }else if(object.endsWith(".jpeg") || object.endsWith(".jpg")){
                 return "image/jpeg";
-        }else if(fileName.endsWith(".gif")) {
+        }else if(object.endsWith(".gif")) {
                 return "image/gif";
         }
         return "application/octet-stream";
